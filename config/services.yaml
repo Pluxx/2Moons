@@ -20,6 +20,7 @@ services:
         resource: '../src/'
         exclude:
             - '../src/Domain/Economy/'
+            - '../src/Domain/Development/'
             - '../src/Entity/'
 
     App\Domain\Economy\EconomySettings:
@@ -27,6 +28,7 @@ services:
 
     App\Domain\Economy\EconomyCalculator: ~
     App\Domain\Economy\EconomyEngine: ~
+    App\Domain\Development\AccountEngine: ~
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

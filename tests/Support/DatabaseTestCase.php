@@ -54,8 +54,12 @@ abstract class DatabaseTestCase extends KernelTestCase
 
     private function clearGameRows(): void
     {
+        $this->connection->executeStatement('DELETE FROM fleet');
+        $this->connection->executeStatement('DELETE FROM shipyard_batch');
+        $this->connection->executeStatement('DELETE FROM research_entry');
         $this->connection->executeStatement('DELETE FROM construction_entry');
         $this->connection->executeStatement('DELETE FROM planet');
         $this->connection->executeStatement('DELETE FROM game_user');
+        $this->connection->executeStatement('UPDATE universe SET next_home_index = 0 WHERE id = 1');
     }
 }

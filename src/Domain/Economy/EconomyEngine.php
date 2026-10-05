@@ -23,7 +23,8 @@ final readonly class EconomyEngine
         }
 
         $cost = $this->calculator->priceFor($building, $targetLevel);
-        $duration = $this->calculator->buildDurationSeconds($building, $targetLevel, $settings);
+        $roboticsLevel = $state->levels->get(Building::RoboticsFactory);
+        $duration = $this->calculator->buildDurationSeconds($building, $targetLevel, $settings, $roboticsLevel);
         if ($duration === null) {
             return QuoteResult::rejected(RejectionCode::TimestampRange, ['building' => $building->value]);
         }
@@ -34,7 +35,7 @@ final readonly class EconomyEngine
             $projectedStart = $head->completesAt;
             for ($index = 1, $count = count($state->pendingEntries); $index < $count; ++$index) {
                 $entry = $state->pendingEntries[$index];
-                $priorDuration = $this->calculator->buildDurationSeconds($entry->building, $entry->targetLevel, $settings);
+                $priorDuration = $this->calculator->buildDurationSeconds($entry->building, $entry->targetLevel, $settings, $roboticsLevel);
                 if ($priorDuration === null) {
                     return QuoteResult::rejected(RejectionCode::TimestampRange, ['building' => $entry->building->value]);
                 }
@@ -112,6 +113,47 @@ final readonly class EconomyEngine
         $working = $this->settleInterval($working, $timestamp, $settings);
 
         return EconomyResult::accepted($working, $outcomes);
+    }
+
+    /** Accrue only; account timelines complete queues globally after all planets reach a boundary. */
+    public function accrueToBoundary(PlanetEconomyState $state, int $timestamp, EconomySettings $settings): PlanetEconomyState
+    {
+        if ($timestamp < $state->lastSettledAt) {
+            throw new EconomyDataException('Account timeline cannot accrue a planet backwards.');
+        }
+
+        return $this->settleInterval($state, $timestamp, $settings);
+    }
+
+    /** Complete one due construction head without activating its waiting tail. @return array{PlanetEconomyState,list<ConstructionEntry>,ConstructionOutcome} */
+    public function completeConstructionHead(PlanetEconomyState $state, int $timestamp): array
+    {
+        $head = $state->pendingEntries[0] ?? null;
+        if ($head === null || !$head->isActive() || $head->completesAt > $timestamp || $state->lastSettledAt !== $timestamp) {
+            throw new EconomyDataException('Construction completion is not due at the supplied account boundary.');
+        }
+        if ($head->targetLevel !== $state->levels->get($head->building) + 1) {
+            throw new EconomyDataException('Construction target became stale before completion.');
+        }
+        $completed = $state->evolve(
+            levels: $state->levels->with($head->building, $head->targetLevel),
+            fieldsUsed: $state->fieldsUsed + 1,
+            pendingEntries: [],
+        );
+
+        return [$completed, array_slice($state->pendingEntries, 1), ConstructionOutcome::completed(
+            $head->commandToken, $head->building, $head->targetLevel, $head->startedAt, $head->completesAt,
+        )];
+    }
+
+    /** @param list<ConstructionEntry> $waiting */
+    public function activateConstructionTail(PlanetEconomyState $state, array $waiting, int $timestamp, EconomySettings $settings): EconomyResult
+    {
+        if ($state->lastSettledAt !== $timestamp) {
+            throw new EconomyDataException('Construction activation must occur at its account boundary.');
+        }
+
+        return $this->activateNext($state, $waiting, $timestamp, $settings);
     }
 
     public function enqueue(
@@ -195,7 +237,8 @@ final readonly class EconomyEngine
                 return EconomyResult::rejected($state, RejectionCode::StaleTarget, ['command_token' => $candidate->commandToken]);
             }
 
-            $duration = $this->calculator->buildDurationSeconds($candidate->building, $candidate->targetLevel, $settings);
+            $duration = $this->calculator->buildDurationSeconds($candidate->building, $candidate->targetLevel, $settings,
+                $working->levels->get(Building::RoboticsFactory));
             $completion = $duration === null ? null : $this->calculator->checkedTimestampAdd($timestamp, $duration);
             if ($completion === null) {
                 return EconomyResult::rejected($state, RejectionCode::TimestampRange, ['command_token' => $candidate->commandToken]);

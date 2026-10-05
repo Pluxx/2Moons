@@ -36,7 +36,7 @@ final readonly class BuildingLevels
     {
         $complete = self::fromArray($levels, $maximumLevel);
         if (count($levels) !== count(Building::cases())) {
-            throw new EconomyDataException('Persisted building levels must contain all seven building keys.');
+            throw new EconomyDataException('Persisted building levels must contain all ten building keys.');
         }
 
         return $complete;

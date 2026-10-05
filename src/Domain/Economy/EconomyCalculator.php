@@ -85,10 +85,10 @@ final class EconomyCalculator
         );
     }
 
-    public function buildDurationSeconds(Building $building, int $targetLevel, EconomySettings $settings): ?int
+    public function buildDurationSeconds(Building $building, int $targetLevel, EconomySettings $settings, ?int $roboticsLevel = null): ?int
     {
         $cost = $this->priceFor($building, $targetLevel);
-        $denominator = $settings->gameSpeed->multipliedBy(1 + $settings->roboticsLevel);
+        $denominator = $settings->gameSpeed->multipliedBy(1 + ($roboticsLevel ?? $settings->roboticsLevel));
         $duration = $cost->get(Resource::Metal)
             ->plus($cost->get(Resource::Crystal))
             ->dividedBy($denominator)

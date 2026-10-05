@@ -74,6 +74,15 @@ final readonly class ResourceAmounts
         );
     }
 
+    public function plus(self $amounts): self
+    {
+        return new self(
+            $this->metal->plus($amounts->metal),
+            $this->crystal->plus($amounts->crystal),
+            $this->deuterium->plus($amounts->deuterium),
+        );
+    }
+
     public function with(Resource $resource, BigRational $amount): self
     {
         return match ($resource) {

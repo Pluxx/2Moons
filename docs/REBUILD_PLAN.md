@@ -79,9 +79,10 @@ limitation and use source-derived fixtures rather than claiming runtime parity.
 
 Write and approve the game-identity brief and eventual first release's exact
 features. The proposal is in [GAME_SCOPE.md](GAME_SCOPE.md); eventual v1 breadth
-is not yet product-approved. The first playable economy milestone is approved,
-and its source-derived rules and fixtures are recorded in
-[ECONOMY_RULES.md](ECONOMY_RULES.md) and [fixtures/economy.json](fixtures/economy.json).
+is not yet product-approved. The first playable economy milestone is accepted;
+the next colonization/owned-transport milestone is approved as a rules contract,
+with independent source-derived fixtures in [TRANSPORT_RULES.md](TRANSPORT_RULES.md)
+and [fixtures/transport.json](fixtures/transport.json).
 Extract versioned rule sheets covering:
 
 - Resource identifiers, production, storage, costs, and universe speed modifiers.
@@ -94,11 +95,12 @@ For each rule, record its legacy source, examples, and a decision:
 legacy bug as a requirement. Keep game settings and catalogue data explicit.
 
 **Status/gate:** first-economy scope and its source-derived rule, queue, and
-numeric policies are approved, implemented in the domain, and accepted through
-Phase A. Exact rational persistence is documented in
+numeric policies are accepted through Phase C. Colonization/transport rules are
+approved; that milestone's Phase A pure-domain implementation is underway, with
+Phase B and C not started. Exact rational persistence is documented in
 [NUMERIC_POLICY.md](NUMERIC_POLICY.md). Phase 1 as a whole remains open for
-eventual v1 scope and later fleet/combat rules. Fixtures are source-derived; no
-isolated legacy runtime was used.
+eventual v1 scope and combat rules. Transport fixtures are independently
+calculated; no isolated legacy runtime was used.
 
 ## Phase 2 — Establish a small modern foundation
 
@@ -160,12 +162,17 @@ production, energy/storage, reload/login persistence, and late worker catch-up.
 Gate C is accepted for the local playable economy. Hosted CI was not run; these
 results do not establish production readiness or acceptance of later phases.
 
-## Phase 4 — Research, shipyard, and transport (not implemented)
+## Phase 4 — Research, shipyard, colonization, and transport (Phase A underway; not playable)
 
-Add only the prerequisites needed to build a transport ship. Complete the next
-loop: **build ship → select a destination → load cargo → launch → arrive → return**.
-Define a seeded second destination or minimal colonization rule explicitly so
-this loop is playable in a fresh universe.
+The approved rules and independent numeric fixtures are in
+[TRANSPORT_RULES.md](TRANSPORT_RULES.md) and
+[fixtures/transport.json](fixtures/transport.json). Phase A pure-domain work is
+underway. The old seven-building HTTP surface remains in place as a compatibility
+bridge. Phase B persistence/schema and Phase C playable acceptance have not
+started; no universe, research, shipyard, colony, fleet, or new HTTP route is
+claimed implemented. Once those phases are approved and complete, the intended
+loop is **build ship → select a destination → load cargo → launch → arrive →
+return**.
 
 Implement durable scheduled events and the worker using transport before combat.
 

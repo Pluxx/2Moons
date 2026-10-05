@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "title": "Independent colonization and transport rules fixtures",
+  "provenance": {
+    "sourceFiles": [
+      "legacy/includes/classes/class.FleetFunctions.php:20-27,34-64,87-114,135-175",
+      "legacy/includes/classes/PlayerUtil.class.php:567-613",
+      "legacy/includes/PlanetData.php:19-33",
+      "legacy/install/install.sql:244-255,948-959,1157-1210",
+      "legacy/includes/classes/class.BuildFunctions.php:129-180",
+      "legacy/includes/classes/missions/MissionCaseColonisation.class.php:25-123",
+      "legacy/includes/classes/missions/MissionCaseTransport.class.php:24-87",
+      "legacy/includes/pages/game/ShowFleetStep3Page.class.php:71-95,126-181,334-404"
+    ],
+    "method": "Expected values independently derived with Python Fraction and integer arithmetic. Irrational roots use isqrt-certified rational bounds: for n/d and scale S, r=isqrt(floor(n*S^2/d)); use [r/S,(r+1)/S], except exact roots, and propagate rational intervals at scales 16,32,64,128,256. Accept a rounded result only when both bounds agree. No production calculator or legacy PHP was run.",
+    "numberEncoding": "Counts, costs, distances, timestamps, and expected whole outputs are JSON integers when within the interoperable safe range; exact integer magnitudes above 2^53 use canonical decimal strings. Rational inputs are canonical numerator/denominator strings."
+  },
+  "catalogue": {
+    "buildings": [14, 21, 31],
+    "technologies": [106, 113, 115, 117, 124],
+    "ships": [202, 208],
+    "originalSevenBuildingPrices": "unchanged; see docs/fixtures/economy.json"
+  },
+  "fixtures": [
+    {
+      "id": "facility-base-prices-level-1",
+      "kind": "price",
+      "input": {"targets": [{"id":14,"level":1},{"id":21,"level":1},{"id":31,"level":1}]},
+      "expected": {"costs":[{"id":14,"metal":800,"crystal":240,"deuterium":400},{"id":21,"metal":800,"crystal":400,"deuterium":200},{"id":31,"metal":400,"crystal":800,"deuterium":400}]}
+    },
+    {
+      "id": "technology-target-costs",
+      "kind": "price",
+      "input": {"targets":[{"id":106,"level":3},{"id":113,"level":1},{"id":115,"level":1},{"id":117,"level":3},{"id":124,"level":1}]},
+      "expected": {"costs":[{"id":106,"metal":1600,"crystal":8000,"deuterium":1600},{"id":113,"metal":0,"crystal":1600,"deuterium":800},{"id":115,"metal":800,"crystal":0,"deuterium":1200},{"id":117,"metal":16000,"crystal":32000,"deuterium":4800},{"id":124,"metal":7000,"crystal":14000,"deuterium":7000}]}
+    },
+    {
+      "id":"ship-linear-batch-price",
+      "kind":"price",
+      "input":{"units":[{"id":202,"count":3},{"id":208,"count":2}]},
+      "expected":{"costs":[{"id":202,"metal":6000,"crystal":6000,"deuterium":0},{"id":208,"metal":20000,"crystal":40000,"deuterium":20000}]}
+    },
+    {
+      "id":"position-expedition-thresholds",
+      "kind":"colonization-position-requirement",
+      "input":{"positions":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]},
+      "expected":{"levels":[8,6,4,1,1,1,1,1,1,1,1,1,4,6,8]}
+    },
+    {
+      "id":"owned-planet-cap",
+      "kind":"planet-cap",
+      "input":{"expeditionLevels":[0,1,2,21,22,255]},
+      "expected":{"planetCountsIncludingHome":[9,10,10,20,20,20]}
+    },
+    {
+      "id":"position-climate-field-bands",
+      "kind":"colony-position-bands",
+      "input":{"positions":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]},
+      "expected":{"bands":[{"maxTemperature":[220,260],"fields":[95,108]},{"maxTemperature":[170,210],"fields":[97,110]},{"maxTemperature":[120,160],"fields":[98,137]},{"maxTemperature":[70,110],"fields":[123,203]},{"maxTemperature":[60,100],"fields":[148,210]},{"maxTemperature":[50,90],"fields":[148,226]},{"maxTemperature":[40,80],"fields":[141,273]},{"maxTemperature":[30,70],"fields":[169,246]},{"maxTemperature":[20,60],"fields":[161,238]},{"maxTemperature":[10,50],"fields":[154,224]},{"maxTemperature":[0,40],"fields":[148,204]},{"maxTemperature":[-10,30],"fields":[136,171]},{"maxTemperature":[-50,-10],"fields":[109,121]},{"maxTemperature":[-90,-50],"fields":[81,93]},{"maxTemperature":[-130,-90],"fields":[65,74]}],"minimumTemperatureRule":"sampled maximumTemperature - 40; no second draw","sampling":"inclusive uniform integer per source band"}
+    },
+    {
+      "id":"hierarchical-distance-no-wrap",
+      "kind":"distance",
+      "input":{"routes":[{"from":[1,1,3],"to":[1,1,4]},{"from":[1,1,3],"to":[1,1,1]},{"from":[1,1,3],"to":[1,2,3]},{"from":[1,1,3],"to":[2,1,3]},{"from":[1,1,3],"to":[9,400,15]}]},
+      "expected":{"distances":[1005,1010,2795,20000,160000]}
+    },
+    {
+      "id":"same-coordinate-is-distance-five-but-not-dispatchable",
+      "kind":"same-coordinate-dispatch",
+      "input":{"source":[1,1,3],"target":[1,1,3]},
+      "expected":{"distance":5,"dispatch":"reject-source-is-target"}
+    },
+    {
+      "id":"cargo-speed-index-10-distance-1005",
+      "kind":"flight",
+      "input":{"departure":1000,"speedIndex":10,"distance":1005,"fleetFactor":{"numerator":"1","denominator":"1"},"ships":[{"id":202,"count":1,"baseSpeed":5000,"engine":"combustion","combustionLevel":2,"consumption":10}]},
+      "expected":{"rawDurationWitness":"4539.762686...","arrival":5540,"return":10080,"fuel":2,"capacity":5000}
+    },
+    {
+      "id":"independent-return-rounding-distance-1020",
+      "kind":"flight",
+      "input":{"departure":1000,"speedIndex":10,"distance":1020,"fleetFactor":{"numerator":"1","denominator":"1"},"ships":[{"id":202,"count":1,"baseSpeed":5000,"engine":"combustion","combustionLevel":2,"consumption":10}]},
+      "expected":{"rawDurationWitness":"4573.441683...","arrival":5573,"return":10147,"fuel":2,"capacity":5000}
+    },
+    {
+      "id":"speed-selector-index-not-displayed-percent",
+      "kind":"flight",
+      "input":{"departure":0,"speedIndexes":[1,10],"distance":1005,"fleetFactor":{"numerator":"1","denominator":"1"},"ships":[{"id":202,"count":1,"baseSpeed":5000,"engine":"combustion","combustionLevel":2,"consumption":10}]},
+      "expected":{"durationRounded":[45308,4540],"returnOffset":[90615,9080],"fuel":[1,2]}
+    },
+    {
+      "id":"mixed-small-cargo-and-colony-ship",
+      "kind":"flight",
+      "input":{"departure":0,"speedIndex":10,"distance":1005,"fleetFactor":{"numerator":"1","denominator":"1"},"ships":[{"id":202,"count":1,"baseSpeed":5000,"engine":"combustion","combustionLevel":2,"consumption":10,"capacity":5000},{"id":208,"count":1,"baseSpeed":2500,"engine":"impulse","impulseLevel":3,"consumption":1000,"capacity":7500}]},
+      "expected":{"slowestSpeed":4000,"durationRounded":5558,"returnOffset":11116,"fuel":117,"capacity":12500}
+    },
+    {
+      "id":"cargo-plus-fuel-capacity-boundary",
+      "kind":"capacity-fit",
+      "input":{"ships":[{"id":202,"count":1,"capacity":5000}],"fuel":2,"cargoAmounts":[4998,4999]},
+      "expected":{"fits":[true,false],"rule":"cargo plus fuel must not exceed capacity"}
+    },
+    {
+      "id":"small-cargo-drive-switch-keeps-base-speed",
+      "kind":"small-cargo-stats",
+      "input":{"impulseLevels":[4,5]},
+      "expected":{"baseSpeed":[5000,5000],"engine":["combustion","impulse"],"consumption":[10,20],"unusedSpeed2":true}
+    },
+    {
+      "id":"construction-and-facility-times",
+      "kind":"construction-time",
+      "input":{"gameSpeed":2500,"roboticsLevels":[0,1,2],"targets":[{"id":14,"level":1,"robotics":0},{"id":14,"level":2,"robotics":1},{"id":21,"level":1,"robotics":2},{"id":31,"level":1,"robotics":2},{"id":31,"level":2,"robotics":2},{"id":31,"level":3,"robotics":2}]},
+      "expected":{"seconds":[1497,1497,576,576,1152,2304]}
+    },
+    {
+      "id":"spy-research-times-valid-prerequisites",
+      "kind":"research-time",
+      "input":{"gameSpeed":2500,"laboratory":3,"targets":[{"id":106,"level":1,"metal":400,"crystal":2000},{"id":106,"level":2,"metal":800,"crystal":4000},{"id":106,"level":3,"metal":1600,"crystal":8000}]},
+      "expected":{"seconds":[2160,4320,8640],"admissionPrerequisiteValid":true}
+    },
+    {
+      "id":"expedition-level-one-research-time",
+      "kind":"research-time",
+      "input":{"gameSpeed":2500,"laboratory":3,"target":{"id":124,"level":1,"metal":7000,"crystal":14000}},
+      "expected":{"seconds":18900}
+    },
+    {
+      "id":"ship-unit-times-at-shipyard-four",
+      "kind":"ship-unit-time",
+      "input":{"gameSpeed":2500,"shipyard":4,"ships":[{"id":202,"metal":2000,"crystal":2000},{"id":208,"metal":10000,"crystal":20000}]},
+      "expected":{"seconds":[1152,8640]}
+    },
+    {
+      "id":"ship-batch-partial-materialization",
+      "kind":"ship-batch-progress",
+      "input":{"quantity":1000000,"unitSeconds":1152,"elapsedSeconds":3457,"alreadyProduced":1},
+      "expected":{"newlyProduced":2,"totalProduced":3,"remaining":999997},
+      "note":"Integer division; do not iterate once per produced unit."
+    },
+    {
+      "id":"half-up-ties-are-explicit-math",
+      "kind":"synthetic-rounding",
+      "input":{"values":[{"numerator":"1","denominator":"2"},{"numerator":"5","denominator":"2"},{"numerator":"7","denominator":"2"}]},
+      "expected":{"halfUp":[1,3,4]},
+      "note":"Synthetic rounding helper examples, not fleet-stat witnesses."
+    },
+    {
+      "id":"flight-arrival-timestamp-overflow-rejects-before-payment",
+      "kind":"technical-rejection",
+      "input":{"departure":"9223372036854775800","speedIndex":10,"distance":1005,"fleetFactor":{"numerator":"1","denominator":"1"},"ships":[{"id":202,"count":1,"baseSpeed":5000,"engine":"combustion","combustionLevel":2,"consumption":10}]},
+      "expected":{"arrivalOffset":4540,"returnOffset":9080,"dispatch":"reject-timestamp-range","payment":"none","persistedFleet":"none"},
+      "note":"Departure is a canonical decimal string within signed BIGINT range but only seven seconds below its maximum; the valid flight's arrival and return timestamps overflow. Reject before payment."
+    },
+    {
+      "id":"strict-transport-payload-boundary",
+      "kind":"transport-admission",
+      "input":{"cargo":["0","1","1.5","-1","1e2"],"destinationOwnership":["owner","foreign"]},
+      "expected":{"transport":{"0":"reject-empty","1":"accept-if-funded-and-capacity-fits","1.5":"reject-fraction","-1":"reject-negative","1e2":"reject-exponent"},"foreign":"reject"}
+    },
+    {
+      "id":"colonization-admission-and-arrival-policy",
+      "kind":"colonization-policy",
+      "input":{"colonyShips":1,"cargo":0,"expeditionLevelAtLaunch":0,"expeditionLevelAtArrival":1,"destinationPosition":4,"ownedPlanetsBeforeArrival":9},
+      "expected":{"launch":"allowed-with-eligibility-warning","arrival":"success-if-coordinate-free-and-capacity-remains","newPlanetResources":{"metal":500,"crystal":500,"deuterium":0},"colonyShipConsumed":1,"remainingShipsReturnEmpty":true,"birth":"scheduled-arrival"}
+    }
+  ]
+}

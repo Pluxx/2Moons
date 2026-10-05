@@ -38,6 +38,12 @@ final class PlanetController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
+        if (!in_array($buildingId, [1, 2, 3, 4, 22, 23, 24], true)) {
+            $this->addFlash('error', 'That construction request could not be validated. Please retry from the planet page.');
+
+            return $this->redirectToRoute('app_planet');
+        }
+
         $data = $request->request->all();
         $expectedText = $data['expected_target'] ?? null;
         $commandToken = $data['command_token'] ?? null;

@@ -8,6 +8,7 @@ use App\Domain\Economy\Building;
 use App\Domain\Economy\BuildingLevels;
 use App\Domain\Economy\EconomyDataException;
 use App\Domain\Economy\PlanetEconomyState;
+use App\Domain\Development\Coordinates;
 use App\Domain\Economy\ResourceAmounts;
 use App\Repository\PlanetRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -17,7 +18,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PlanetRepository::class)]
 #[ORM\Table(name: 'planet')]
-#[ORM\UniqueConstraint(name: 'UNIQ_68136AA57E3C61F9', columns: ['owner_id'])]
+#[ORM\Index(name: 'idx_planet_owner', columns: ['owner_id', 'id'])]
+#[ORM\UniqueConstraint(name: 'uniq_planet_coordinate', columns: ['universe_id', 'galaxy', 'system', 'position'])]
 class Planet
 {
     #[ORM\Id]
@@ -25,7 +27,7 @@ class Planet
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\OneToOne(inversedBy: 'planet', targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'planets')]
     #[ORM\JoinColumn(name: 'owner_id', nullable: false, onDelete: 'CASCADE')]
     private User $owner;
 
@@ -62,6 +64,27 @@ class Planet
     #[ORM\Column(name: 'deuterium_storage_level', type: 'smallint', options: ['unsigned' => true])]
     private int $deuteriumStorageLevel;
 
+    #[ORM\Column(name: 'robotics_factory_level', type: 'smallint', options: ['unsigned' => true, 'default' => 0])]
+    private int $roboticsFactoryLevel = 0;
+    #[ORM\Column(name: 'shipyard_level', type: 'smallint', options: ['unsigned' => true, 'default' => 0])]
+    private int $shipyardLevel = 0;
+    #[ORM\Column(name: 'laboratory_level', type: 'smallint', options: ['unsigned' => true, 'default' => 0])]
+    private int $laboratoryLevel = 0;
+    #[ORM\Column(name: 'small_cargo_count', type: 'bigint', options: ['default' => 0])]
+    private string $smallCargoCount = '0';
+    #[ORM\Column(name: 'colony_ship_count', type: 'bigint', options: ['default' => 0])]
+    private string $colonyShipCount = '0';
+    #[ORM\Column(name: 'universe_id', type: 'smallint', options: ['unsigned' => true, 'default' => 1])]
+    private int $universeId = 1;
+    #[ORM\Column(name: 'galaxy', type: 'smallint', options: ['unsigned' => true, 'default' => 1])]
+    private int $galaxy = 1;
+    #[ORM\Column(name: 'system', type: 'smallint', options: ['unsigned' => true, 'default' => 1])]
+    private int $system = 1;
+    #[ORM\Column(name: 'position', type: 'smallint', options: ['unsigned' => true, 'default' => 3])]
+    private int $position = 3;
+    #[ORM\Column(name: 'born_at', type: 'bigint', options: ['default' => 0])]
+    private string $bornAt = '0';
+
     #[ORM\Column(name: 'temperature_max', type: 'smallint')]
     private int $temperatureMax;
 
@@ -78,11 +101,17 @@ class Planet
     #[ORM\OneToMany(mappedBy: 'planet', targetEntity: ConstructionEntry::class)]
     private Collection $constructionEntries;
 
-    public function __construct(User $owner, PlanetEconomyState $state)
+    public function __construct(User $owner, PlanetEconomyState $state, ?Coordinates $coordinates = null, ?int $bornAt = null, string $name = 'Homeworld')
     {
         $this->owner = $owner;
         $owner->setPlanet($this);
         $this->constructionEntries = new ArrayCollection();
+        $coordinates ??= new Coordinates(1, 1, 3);
+        $this->galaxy = $coordinates->galaxy;
+        $this->system = $coordinates->system;
+        $this->position = $coordinates->position;
+        $this->bornAt = (string) ($bornAt ?? $state->lastSettledAt);
+        $this->name = $name;
         $this->apply($state);
     }
 
@@ -94,6 +123,19 @@ class Planet
     public function getOwner(): User
     {
         return $this->owner;
+    }
+
+    public function getCoordinates(): Coordinates { return new Coordinates($this->galaxy, $this->system, $this->position); }
+    public function getBornAt(): string { return $this->bornAt; }
+    public function getUniverseId(): int { return $this->universeId; }
+    /** @return array<string,int> */
+    public function shipInventory(): array
+    {
+        return ['small_cargo' => self::bigintToNativeInt($this->smallCargoCount), 'colony_ship' => self::bigintToNativeInt($this->colonyShipCount)];
+    }
+    public function setCoordinates(Coordinates $coordinates): void
+    {
+        $this->galaxy = $coordinates->galaxy; $this->system = $coordinates->system; $this->position = $coordinates->position;
     }
 
     public function getName(): string
@@ -135,10 +177,20 @@ class Planet
         $this->metalStorageLevel = $levels[Building::MetalStorage->value];
         $this->crystalStorageLevel = $levels[Building::CrystalStorage->value];
         $this->deuteriumStorageLevel = $levels[Building::DeuteriumStorage->value];
+        $this->roboticsFactoryLevel = $levels[Building::RoboticsFactory->value];
+        $this->shipyardLevel = $levels[Building::Shipyard->value];
+        $this->laboratoryLevel = $levels[Building::Laboratory->value];
         $this->temperatureMax = $state->temperatureMax;
         $this->fieldsTotal = $state->fieldsTotal;
         $this->fieldsUsed = $state->fieldsUsed;
         $this->lastSettledAt = (string) $state->lastSettledAt;
+    }
+
+    public function setDomainState(PlanetEconomyState $state, array $ships): void
+    {
+        $this->apply($state);
+        $this->smallCargoCount = (string) $ships['small_cargo'];
+        $this->colonyShipCount = (string) $ships['colony_ship'];
     }
 
     /** @param list<ConstructionEntry> $entries */
@@ -158,6 +210,9 @@ class Planet
                 Building::MetalStorage->value => $this->metalStorageLevel,
                 Building::CrystalStorage->value => $this->crystalStorageLevel,
                 Building::DeuteriumStorage->value => $this->deuteriumStorageLevel,
+                Building::RoboticsFactory->value => $this->roboticsFactoryLevel,
+                Building::Shipyard->value => $this->shipyardLevel,
+                Building::Laboratory->value => $this->laboratoryLevel,
             ],
             'temperature_max' => $this->temperatureMax,
             'fields_total' => $this->fieldsTotal,

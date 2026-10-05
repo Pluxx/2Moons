@@ -37,7 +37,15 @@ final readonly class PlanetViewBuilder
         $mode = $state->pendingEntries === [] ? 'start' : 'queue';
         $buildings = [];
 
-        foreach (Building::cases() as $building) {
+        foreach ([
+            Building::MetalMine,
+            Building::CrystalMine,
+            Building::DeuteriumSynthesizer,
+            Building::SolarPlant,
+            Building::MetalStorage,
+            Building::CrystalStorage,
+            Building::DeuteriumStorage,
+        ] as $building) {
             $quote = $this->engine->quote($state, $building, $this->settings);
             $target = $state->levels->get($building) + $this->pendingCount($state, $building) + 1;
             $cost = $target <= $building->maximumLevel()

@@ -17,6 +17,14 @@ are specified in [NUMERIC_POLICY.md](NUMERIC_POLICY.md). The rules preserve the
 reviewed source balance except for explicitly recorded confirmed-bug and queue
 consistency fixes, plus the approved common starting climate.
 
+The next approved milestone is colonization and owned-planet transport. Its
+source-derived rules and independent examples are recorded in
+[TRANSPORT_RULES.md](TRANSPORT_RULES.md) and
+[fixtures/transport.json](fixtures/transport.json). Phase A pure-domain work is
+underway; Phase B persistence/migration and Phase C playable acceptance have not
+started. This is a rules approval and work-status update, not a claim that fleets,
+colonies, research, shipyards, universe records, or new HTTP actions are available.
+
 ## Game identity
 
 2Moons is a strategic space game about building an interstellar presence over
@@ -67,7 +75,8 @@ scope proposals, not permanent product decisions.
 | First economy milestone | Approved, implemented, and accepted locally: registration/one 40°C planet, all seven economy buildings, exact persisted resources/production, and the five-entry queue. Phase C automated and parent-reviewed Chromium gates pass; full WCAG audit and production readiness are not claimed. See [ECONOMY_RULES.md](ECONOMY_RULES.md), [NUMERIC_POLICY.md](NUMERIC_POLICY.md), and [PLAYABLE_ECONOMY.md](PLAYABLE_ECONOMY.md). |
 | Eventual v1 catalogues and limits | Open beyond the approved first-economy catalogue. Planet limits and later building/research/ship/defense rosters are not approved. |
 | Legacy behavior | Decide per rule: preserve, intentionally change confirmed bugs, or leave unresolved. The first economy contract records those decisions; do not treat other legacy bugs as requirements. |
-| Fleet and combat rules | Open: ships, travel, fuel, cargo, missions, randomness, rounding, loot, debris, and reports require explicit rules and approval. |
+| Colonization and owned transport | Rules approved for the next milestone and documented in [TRANSPORT_RULES.md](TRANSPORT_RULES.md); Phase A is underway, B/C not started, and none of these systems are yet claimed playable. |
+| Combat and remaining fleet features | Open: attacks, loot, debris, reports, and features outside the approved colonization/transport slice require separate rules and approval. |
 
 ## Remaining approvals and scope boundaries
 
@@ -76,5 +85,8 @@ implemented, and accepted locally. This is not approval of the eventual v1 game.
 Product approval is still needed for eventual v1 breadth, planet limits, and
 later catalogues. Account/planet/queue tables and one-homeworld-per-account
 behavior exist locally, but no galaxy, universe settings/initializer,
-administration, fleets, or combat are implemented. See [FOUNDATION.md](FOUNDATION.md),
+administration, fleets, or combat are implemented. The approved colonization/
+transport milestone is in Phase A domain work only; it has no persistence/schema
+or playable HTTP implementation yet. See [TRANSPORT_RULES.md](TRANSPORT_RULES.md),
+[FOUNDATION.md](FOUNDATION.md),
 [PLAYABLE_ECONOMY.md](PLAYABLE_ECONOMY.md), and [REBUILD_PLAN.md](REBUILD_PLAN.md).

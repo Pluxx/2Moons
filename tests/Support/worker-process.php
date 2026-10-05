@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Application\EconomyApplicationService;
+use App\Application\GameApplicationService;
 use App\Kernel;
-use App\Repository\ConstructionEntryRepository;
+use App\Repository\PlanetRepository;
 use App\Tests\Support\BarrierClock;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\Clock;
@@ -33,7 +33,7 @@ try {
     }
 
     $now = (string) $clock->now()->getTimestamp();
-    $candidates = $container->get(ConstructionEntryRepository::class)->findDuePlanetIds($now, 10);
+    $candidates = $container->get(PlanetRepository::class)->findDueOwnerIds($now, 10);
     $selectedMarker = getenv('ECONOMY_TEST_SELECTED_FILE');
     if (is_string($selectedMarker) && $selectedMarker !== ''
         && file_put_contents($selectedMarker, json_encode($candidates, JSON_THROW_ON_ERROR), LOCK_EX) === false) {
@@ -49,8 +49,8 @@ try {
     $settled = 0;
     $lockWaitTimeout = false;
     try {
-        foreach ($candidates as $planetId) {
-            if ($container->get(EconomyApplicationService::class)->settlePlanetById($planetId)) {
+        foreach ($candidates as $ownerId) {
+            if ($container->get(GameApplicationService::class)->settleAccountById($ownerId)) {
                 ++$settled;
             }
         }

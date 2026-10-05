@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Application\EconomyApplicationService;
-use App\Repository\ConstructionEntryRepository;
+use App\Application\GameApplicationService;
+use App\Repository\PlanetRepository;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -17,8 +17,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class ProcessEconomyCommand extends Command
 {
     public function __construct(
-        private readonly ConstructionEntryRepository $entries,
-        private readonly EconomyApplicationService $economy,
+        private readonly PlanetRepository $planets,
+        private readonly GameApplicationService $game,
         private readonly ClockInterface $clock,
     ) {
         parent::__construct();
@@ -45,15 +45,15 @@ final class ProcessEconomyCommand extends Command
         }
 
         $discoveryTime = (string) $this->clock->now()->getTimestamp();
-        $planetIds = $this->entries->findDuePlanetIds($discoveryTime, $limit);
+        $ownerIds = $this->planets->findDueOwnerIds($discoveryTime, $limit);
         $processed = 0;
-        foreach ($planetIds as $planetId) {
-            if ($this->economy->settlePlanetById($planetId)) {
+        foreach ($ownerIds as $ownerId) {
+            if ($this->game->settleAccountById($ownerId)) {
                 ++$processed;
             }
         }
 
-        $output->writeln(sprintf('<info>Settled %d of %d due planet candidate(s).</info>', $processed, count($planetIds)));
+        $output->writeln(sprintf('<info>Settled %d of %d due account candidate(s).</info>', $processed, count($ownerIds)));
 
         return Command::SUCCESS;
     }

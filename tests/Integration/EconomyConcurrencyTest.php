@@ -67,6 +67,8 @@ final class EconomyConcurrencyTest extends DatabaseTestCase
         self::assertTrue($economy->enqueueForOwner($user, 1, 1, str_repeat('c', 32))->accepted);
         $this->makeCurrentHeadDue();
         $planetId = $this->planetIdFor($user);
+        $ownerId = (int) $user->getId();
+        $ownerId = (int) $user->getId();
         $sync = $this->newSyncDirectory();
         $first = null;
         $second = null;
@@ -78,7 +80,7 @@ final class EconomyConcurrencyTest extends DatabaseTestCase
                 'ECONOMY_TEST_ATTEMPT_FILE' => $sync.'/first-attempted',
             ]);
             $this->waitForMarker($sync.'/first-selected', $first);
-            self::assertSame([$planetId], json_decode((string) file_get_contents($sync.'/first-selected'), true, flags: JSON_THROW_ON_ERROR));
+            self::assertSame([$ownerId], json_decode((string) file_get_contents($sync.'/first-selected'), true, flags: JSON_THROW_ON_ERROR));
             $this->waitForMarker($sync.'/clock-2.entered', $first);
 
             $second = $this->startProcess($this->workerHelperCommand(), [
@@ -89,7 +91,7 @@ final class EconomyConcurrencyTest extends DatabaseTestCase
                 'ECONOMY_TEST_CLOCK_OBSERVED_CALL' => '2',
             ]);
             $this->waitForMarker($sync.'/second-selected', $second);
-            self::assertSame([$planetId], json_decode((string) file_get_contents($sync.'/second-selected'), true, flags: JSON_THROW_ON_ERROR));
+            self::assertSame([$ownerId], json_decode((string) file_get_contents($sync.'/second-selected'), true, flags: JSON_THROW_ON_ERROR));
             $this->waitForMarker($sync.'/second-attempted', $second);
             $secondResponse = $this->decodeJson($this->finishProcess($second));
             self::assertTrue($secondResponse['lock_wait_timeout']);
@@ -97,7 +99,7 @@ final class EconomyConcurrencyTest extends DatabaseTestCase
 
             file_put_contents($sync.'/release', 'release', LOCK_EX);
             $firstResponse = $this->decodeJson($this->finishProcess($first));
-            self::assertSame([$planetId], $firstResponse['selected']);
+            self::assertSame([$ownerId], $firstResponse['selected']);
             self::assertSame(1, $firstResponse['settled']);
 
             $retry = $this->runProcess($this->workerHelperCommand());
@@ -133,7 +135,7 @@ final class EconomyConcurrencyTest extends DatabaseTestCase
                 'ECONOMY_TEST_ATTEMPT_FILE' => $sync.'/worker-attempted',
             ]);
             $this->waitForMarker($sync.'/worker-selected', $worker);
-            self::assertSame([$planetId], json_decode((string) file_get_contents($sync.'/worker-selected'), true, flags: JSON_THROW_ON_ERROR));
+            self::assertSame([$ownerId], json_decode((string) file_get_contents($sync.'/worker-selected'), true, flags: JSON_THROW_ON_ERROR));
             $this->waitForMarker($sync.'/clock-2.entered', $worker);
 
             $request = $this->startProcess($this->enqueueCommand($user, 2, 1, str_repeat('f', 32)), [
@@ -149,7 +151,7 @@ final class EconomyConcurrencyTest extends DatabaseTestCase
 
             file_put_contents($sync.'/release', 'release', LOCK_EX);
             $workerResponse = $this->decodeJson($this->finishProcess($worker));
-            self::assertSame([$planetId], $workerResponse['selected']);
+            self::assertSame([$ownerId], $workerResponse['selected']);
             self::assertSame(1, $workerResponse['settled']);
 
             $retry = $this->runProcess($this->enqueueCommand($user, 2, 1, str_repeat('f', 32)));
@@ -182,7 +184,7 @@ final class EconomyConcurrencyTest extends DatabaseTestCase
             '--limit=10',
         ]);
 
-        self::assertStringContainsString('Settled 1 of 1 due planet candidate(s).', $output['output']);
+        self::assertStringContainsString('Settled 1 of 1 due account candidate(s).', $output['output']);
         self::assertSame('completed', $this->connection->fetchOne('SELECT status FROM construction_entry'));
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT metal_mine_level FROM planet'));
     }

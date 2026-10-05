@@ -15,6 +15,9 @@ enum Building: string
     case MetalStorage = 'metal_storage';
     case CrystalStorage = 'crystal_storage';
     case DeuteriumStorage = 'deuterium_storage';
+    case RoboticsFactory = 'robotics_factory';
+    case Shipyard = 'shipyard';
+    case Laboratory = 'laboratory';
 
     public function legacyId(): int
     {
@@ -26,6 +29,9 @@ enum Building: string
             self::MetalStorage => 22,
             self::CrystalStorage => 23,
             self::DeuteriumStorage => 24,
+            self::RoboticsFactory => 14,
+            self::Shipyard => 21,
+            self::Laboratory => 31,
         };
     }
 
@@ -57,7 +63,8 @@ enum Building: string
     {
         return match ($this) {
             self::MetalMine, self::CrystalMine, self::DeuteriumSynthesizer, self::SolarPlant => BigRational::ofFraction(3, 2),
-            self::MetalStorage, self::CrystalStorage, self::DeuteriumStorage => BigRational::of(2),
+            self::MetalStorage, self::CrystalStorage, self::DeuteriumStorage,
+            self::RoboticsFactory, self::Shipyard, self::Laboratory => BigRational::of(2),
         };
     }
 
@@ -71,6 +78,9 @@ enum Building: string
             self::MetalStorage => ResourceAmounts::fromStrings('2000', '0', '0'),
             self::CrystalStorage => ResourceAmounts::fromStrings('2000', '1000', '0'),
             self::DeuteriumStorage => ResourceAmounts::fromStrings('2000', '2000', '0'),
+            self::RoboticsFactory => ResourceAmounts::fromStrings('400', '120', '200'),
+            self::Shipyard => ResourceAmounts::fromStrings('400', '200', '100'),
+            self::Laboratory => ResourceAmounts::fromStrings('200', '400', '200'),
         };
     }
 
