@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_DATABASE: db
+          MARIADB_USER: db
+          MARIADB_PASSWORD: db
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DATABASE_URL: 'mysql://db:db@127.0.0.1:3306/db?serverVersion=11.8.9-MariaDB&charset=utf8mb4'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: ctype, iconv, pdo_mysql, dom, mbstring, xml, xmlwriter
+          tools: composer:v2
+          coverage: none
+      - run: composer validate --strict
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer check-platform-reqs
+      - run: composer audit --locked
+      - run: composer exec -- php bin/console lint:container
+      - run: composer exec -- php bin/console lint:yaml config
+      - run: mysql --protocol=tcp -h127.0.0.1 -uroot -proot -e "CREATE DATABASE db_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER 'test_runner'@'%' IDENTIFIED BY 'test_runner'; GRANT ALL PRIVILEGES ON db_test.* TO 'test_runner'@'%'"
+      - run: APP_ENV=test composer exec -- php bin/console doctrine:migrations:migrate --no-interaction
+        env:
+          DATABASE_URL: 'mysql://test_runner:test_runner@127.0.0.1:3306/db?serverVersion=11.8.9-MariaDB&charset=utf8mb4'
+      - run: APP_ENV=test composer exec -- php bin/console doctrine:migrations:status
+        env:
+          DATABASE_URL: 'mysql://test_runner:test_runner@127.0.0.1:3306/db?serverVersion=11.8.9-MariaDB&charset=utf8mb4'
+      - run: APP_ENV=test composer test
+        env:
+          DATABASE_URL: 'mysql://test_runner:test_runner@127.0.0.1:3306/db?serverVersion=11.8.9-MariaDB&charset=utf8mb4'
+      - run: APP_ENV=test composer exec -- php bin/console app:health
+        env:
+          DATABASE_URL: 'mysql://test_runner:test_runner@127.0.0.1:3306/db?serverVersion=11.8.9-MariaDB&charset=utf8mb4'

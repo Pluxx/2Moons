@@ -1,0 +1,92 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ view.planet.name }} · 2Moons{% endblock %}
+{% block header_context %}
+<div class="header-planet"><span class="live-dot" aria-hidden="true"></span><span>{{ view.planet.name }}</span></div>
+<form method="post" action="{{ path('app_logout') }}" class="logout-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}"><button type="submit" class="text-button">Sign out</button></form>
+{% endblock %}
+{% block body %}
+<div class="overview" data-server-now="{{ view.server_now }}">
+    <section class="planet-heading" aria-labelledby="planet-title">
+        <div><p class="eyebrow">Planetary overview</p><h1 id="planet-title">{{ view.planet.name }}</h1></div>
+        <dl class="planet-facts"><div><dt>Maximum temperature</dt><dd>{{ view.planet.temperature_max }}°C</dd></div><div><dt>Fields</dt><dd>{{ view.planet.fields_used }} / {{ view.planet.fields_total }} used{% if view.planet.fields_reserved %}<span class="fact-note"> · {{ view.planet.fields_reserved }} reserved</span>{% endif %}</dd></div></dl>
+    </section>
+
+    <section aria-labelledby="resources-title" class="resource-section">
+        <div class="section-heading"><div><p class="eyebrow">Planetary economy</p><h2 id="resources-title">Resources</h2></div><span class="section-note">Stock · production · storage</span></div>
+        <div class="resource-grid">
+            {% for resource in view.resources %}
+                <article class="resource-card resource-{{ resource.key }}">
+                    <div class="resource-title"><span class="resource-symbol" aria-hidden="true">{% if resource.key == 'metal' %}M{% elseif resource.key == 'crystal' %}C{% else %}D{% endif %}</span><h3>{{ resource.label }}</h3></div>
+                    <p class="resource-stock">{{ resource.stock }}{% if resource.stock_approximate %}<span class="approx" aria-label="approximately">≈</span>{% endif %}</p>
+                    <dl class="resource-details"><div><dt>Per hour</dt><dd>{{ resource.rate }}{% if resource.rate_approximate %}<span class="approx" aria-label="approximately">≈</span>{% endif %}<span class="unit">/h</span></dd></div><div><dt>Capacity</dt><dd>{{ resource.capacity }}</dd></div></dl>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="power-panel" aria-labelledby="power-title">
+        <div class="power-mark" aria-hidden="true">ϟ</div>
+        <div class="power-main"><p class="eyebrow">Production balance</p><h2 id="power-title">Energy</h2><p>{% if view.energy.no_demand %}No mine demand at current levels.{% elseif view.energy.constrained %}Available energy limits mine production.{% else %}Energy demand is covered.{% endif %}</p></div>
+        <dl class="power-stats"><div><dt>Generated</dt><dd>{{ view.energy.generated }}</dd></div><div><dt>Demand</dt><dd>{{ view.energy.demand }}{% if view.energy.demand_approximate %}<span class="approx" aria-label="approximately">≈</span>{% endif %}</dd></div><div><dt>Mine production</dt><dd>{% if view.energy.no_demand %}No demand{% else %}{{ view.energy.factor }}{% endif %}</dd></div></dl>
+    </section>
+
+    <section class="work-section" aria-label="Planet development">
+        <div class="work-column">
+            <section class="queue-panel" aria-labelledby="queue-title">
+                <div class="section-heading queue-heading"><div><p class="eyebrow">Construction</p><h2 id="queue-title">Build queue <span class="queue-count">{{ view.queue|length }} / 5</span></h2></div></div>
+                {% if view.queue is empty %}
+                    <p class="empty-state">No construction underway. Choose a building to begin.</p>
+                {% else %}
+                    <ol class="queue-list">
+                    {% for item in view.queue %}
+                        {% set active = loop.first %}
+                        <li class="queue-item {{ active ? 'queue-active' : 'queue-waiting' }}">
+                            <span class="queue-index" aria-hidden="true">{{ '%02d'|format(loop.index) }}</span>
+                            <div class="queue-copy"><div class="queue-title-line"><h3>{{ item.building_label }}</h3><span class="level-tag">Level {{ item.target_level }}</span></div>
+                                {% if active %}
+                                    <p class="queue-state">{{ item.status|replace({'_':' '})|title }} · started {{ item.started_at|date('M j, H:i', 'UTC') }}</p>
+                                    <p class="due-line">Due <time class="queue-countdown" data-due="{{ item.completes_at }}" datetime="{{ item.completes_at|date('c', 'UTC') }}">{{ item.completes_at|date('M j, H:i', 'UTC') }}</time><span class="approx-note"> · approximate</span></p>
+                                {% else %}
+                                    <p class="queue-state">Waiting · resources charged when construction starts</p>
+                                    <p class="due-line">Estimated <time class="queue-estimate" data-due="{{ item.estimated_completes_at }}" datetime="{{ item.estimated_completes_at|date('c', 'UTC') }}">{{ item.estimated_completes_at|date('M j, H:i', 'UTC') }}</time><span class="approx-note"> · estimate; earlier work may fail</span></p>
+                                {% endif %}
+                            </div>
+                            <span class="queue-status">{{ active ? 'In progress' : 'Queued' }}</span>
+                        </li>
+                    {% endfor %}
+                    </ol>
+                    <p class="queue-footnote">Waiting builds use an estimated start and finish. If a build cannot be paid for when it reaches the front, it fails then and the next build can proceed.</p>
+                {% endif %}
+            </section>
+
+            {% if view.recent is not empty %}
+            <section class="recent-panel" aria-labelledby="recent-title"><div class="section-heading"><div><p class="eyebrow">Latest changes</p><h2 id="recent-title">Recent construction</h2></div></div>
+                <ul class="recent-list">{% for item in view.recent %}<li><span class="recent-status status-{{ item.status }}">{{ item.status|replace({'_':' '})|title }}</span><span><strong>{{ item.building_label }} · Level {{ item.target_level }}</strong>{% if item.reason %}<small>{{ item.reason }}</small>{% endif %}</span><time datetime="{{ item.resolved_at|date('c', 'UTC') }}">{{ item.resolved_at|date('M j, H:i', 'UTC') }}</time></li>{% endfor %}</ul>
+            </section>
+            {% endif %}
+        </div>
+
+        <section class="buildings-section" aria-labelledby="buildings-title">
+            <div class="section-heading"><div><p class="eyebrow">Development options</p><h2 id="buildings-title">Buildings</h2></div><span class="section-note">Next level</span></div>
+            <div class="building-grid">
+            {% for building in view.buildings %}
+                <article class="building-card">
+                    <div class="building-top"><span class="building-glyph glyph-{{ building.key }}" aria-hidden="true">{% if building.key == 'metal_mine' %}M{% elseif building.key == 'crystal_mine' %}C{% elseif building.key == 'deuterium_synthesizer' %}D{% elseif building.key == 'solar_plant' %}S{% else %}⇧{% endif %}</span><span class="level-current">Level <strong>{{ building.level }}</strong></span></div>
+                    <h3>{{ building.label }}</h3>
+                    <p class="target-level">Next · Level {{ building.target_level }}</p>
+                    <div class="cost-block"><h4>Cost</h4><ul class="cost-list">{% for cost in building.costs %}<li><span>{{ cost.label }}</span><strong>{{ cost.amount }}{% if cost.approximate %}<span class="approx" aria-label="approximately">≈</span>{% endif %}</strong></li>{% endfor %}</ul></div>
+                    <p class="build-duration"><span>Build time</span><strong>{{ building.duration_seconds }} seconds</strong></p>
+                    {% if building.enabled %}
+                    <form method="post" action="{{ path('app_planet_enqueue', {buildingId: building.id}) }}" class="enqueue-form">
+                        <input type="hidden" name="expected_target" value="{{ building.target_level }}"><input type="hidden" name="command_token" value="{{ building.command_token }}"><input type="hidden" name="_token" value="{{ building.csrf_token }}">
+                        <button class="button button-build" type="submit">{{ building.mode == 'queue' ? 'Add to queue' : 'Start building' }} <span aria-hidden="true">→</span></button>
+                    </form>
+                    {% else %}<p class="build-reason" role="note">{{ building.reason }}</p>{% endif %}
+                </article>
+            {% endfor %}
+            </div>
+        </section>
+    </section>
+</div>
+{% endblock %}
+{% block javascripts %}<script src="{{ asset('assets/js/planet-clock.js') }}" defer></script>{% endblock %}

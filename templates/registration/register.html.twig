@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+{% block title %}Create account · 2Moons{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block body %}
+<section class="auth-layout" aria-labelledby="page-title">
+    <div class="auth-copy">
+        <p class="eyebrow">A place to begin</p>
+        <h1 id="page-title">Create an account</h1>
+        <p>Start with one planet. Build its economy one decision at a time.</p>
+        <div class="orbit-illustration" aria-hidden="true"><span class="orbit orbit-a"></span><span class="orbit orbit-b"></span><span class="world"></span><span class="moon"></span></div>
+    </div>
+    <div class="auth-card">
+        {{ form_start(form, {attr: {class: 'form-stack'}}) }}
+        <div class="form-summary" role="alert">{{ form_errors(form) }}</div>
+        <div class="field"><label for="{{ form.email.vars.id }}">Email</label>{{ form_widget(form.email, {attr: {autocomplete: 'email'}}) }}<div class="field-errors" role="alert">{{ form_errors(form.email) }}</div></div>
+        <fieldset class="password-group">
+            <legend>Password</legend>
+            <div class="field"><label for="{{ form.plainPassword.first.vars.id }}">Password</label>{{ form_widget(form.plainPassword.first, {attr: {autocomplete: 'new-password', 'aria-describedby': form.plainPassword.vars.id ~ '-errors ' ~ form.plainPassword.first.vars.id ~ '-errors'}}) }}<div class="field-errors" id="{{ form.plainPassword.first.vars.id }}-errors" role="alert">{{ form_errors(form.plainPassword.first) }}</div></div>
+            <div class="field"><label for="{{ form.plainPassword.second.vars.id }}">Confirm password</label>{{ form_widget(form.plainPassword.second, {attr: {autocomplete: 'new-password', 'aria-describedby': form.plainPassword.vars.id ~ '-errors ' ~ form.plainPassword.second.vars.id ~ '-errors'}}) }}<div class="field-errors" id="{{ form.plainPassword.second.vars.id }}-errors" role="alert">{{ form_errors(form.plainPassword.second) }}</div></div>
+            <div class="field-errors" id="{{ form.plainPassword.vars.id }}-errors" role="alert">{{ form_errors(form.plainPassword) }}</div>
+        </fieldset>
+        <button class="button button-primary" type="submit">Create account <span aria-hidden="true">→</span></button>
+        {{ form_end(form) }}
+        <p class="auth-switch">Already have an account? <a href="{{ path('app_login') }}">Sign in</a></p>
+    </div>
+</section>
+{% endblock %}

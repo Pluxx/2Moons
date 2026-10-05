@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101923">
+    <title>{% block title %}2Moons{% endblock %}</title>
+    <link rel="stylesheet" href="{{ asset('assets/css/command.css') }}">
+    {% block javascripts %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="masthead">
+    <div class="masthead-inner">
+        <a class="brand" href="{{ path('app_status') }}" aria-label="2Moons home">
+            <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="14"/><ellipse cx="24" cy="24" rx="22" ry="8" transform="rotate(-28 24 24)"/><circle class="brand-satellite" cx="42" cy="14" r="2.5"/></svg>
+            <span>2Moons<small>Planetary command</small></span>
+        </a>
+        {% block header_context %}{% endblock %}
+    </div>
+</header>
+{% for type, messages in app.flashes %}
+    {% for message in messages %}
+        <div class="flash flash-{{ type }}" role="{{ type == 'error' ? 'alert' : 'status' }}">{{ message }}</div>
+    {% endfor %}
+{% endfor %}
+<main id="main" class="page-shell">{% block body %}{% endblock %}</main>
+<footer class="site-footer"><span>2Moons</span><span>A universe in progress</span></footer>
+</body>
+</html>

@@ -1,0 +1,36 @@
+security:
+    password_hashers:
+        App\Entity\User: 'auto'
+
+    providers:
+        game_users:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/(_profiler|_wdt|assets|build)/
+            security: false
+        main:
+            lazy: true
+            provider: game_users
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                enable_csrf: true
+                csrf_parameter: _csrf_token
+                csrf_token_id: authenticate
+            login_throttling:
+                max_attempts: 5
+            logout:
+                path: app_logout
+                enable_csrf: true
+                csrf_parameter: _csrf_token
+                csrf_token_id: logout
+
+    access_control:
+        - { path: ^/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/register$, roles: PUBLIC_ACCESS }
+        - { path: ^/health$, roles: PUBLIC_ACCESS }
+        - { path: ^/planet(?:/|$), roles: ROLE_USER }

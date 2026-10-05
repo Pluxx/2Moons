@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+php -r '
+$problems = [];
+if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION !== 5) {
+    $problems[] = "Expected PHP 8.5; found " . PHP_VERSION;
+}
+foreach (["pdo", "pdo_mysql", "mysqli", "gd", "mbstring", "curl", "openssl", "json", "session"] as $extension) {
+    if (!extension_loaded($extension)) {
+        $problems[] = "Missing PHP extension: $extension";
+    }
+}
+$gd = function_exists("gd_info") ? gd_info() : [];
+foreach (["JPEG Support", "FreeType Support"] as $feature) {
+    if (empty($gd[$feature])) {
+        $problems[] = "GD feature unavailable: $feature";
+    }
+}
+if ($problems) {
+    fwrite(STDERR, implode(PHP_EOL, $problems) . PHP_EOL);
+    exit(1);
+}
+echo "PHP " . PHP_VERSION . ": required extensions and GD JPEG/FreeType support are available." . PHP_EOL;
+'

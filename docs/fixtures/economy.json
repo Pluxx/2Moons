@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "contract": "economy-rules-v1",
+  "source_status": "source-derived",
+  "units": {
+    "time": "seconds unless stated otherwise",
+    "resources": "exact rational values; balances serialize as reduced numerator/denominator strings and fractional accrual is retained",
+    "rates": "resource units per hour",
+    "energy": "generated energy is rounded to whole units; energy demand may be fractional; neither is a rate per hour"
+  },
+  "fixture_defaults": "Fixtures inherit default_settings, no resource/energy/build-time bonuses, vacation mode off, and 100% operating percentages unless explicitly overridden. Omitted stock uses default_settings.starting_resources; omitted capacity is computed from the relevant storage building level (default level 0). temperature_max is not universal and is supplied by each temperature-dependent production fixture.",
+  "default_settings": {
+    "game_speed": "2500",
+    "resource_speed": "1",
+    "storage_multiplier": "1",
+    "energy_speed": "1",
+    "max_overflow": "1",
+    "minimum_build_seconds": 1,
+    "metal_basic_per_hour": "20",
+    "crystal_basic_per_hour": "10",
+    "deuterium_basic_per_hour": "0",
+    "starting_resources": {"metal": "500", "crystal": "500", "deuterium": "0"},
+    "home_fields": 163,
+    "initial_building_levels": 0,
+    "building_percentages": "100%"
+  },
+  "fixtures": [
+    {
+      "id": "idle-basic-income-one-hour",
+      "kind": "accrual",
+      "input": {"elapsed_seconds": 3600, "start": {"metal": "500", "crystal": "500", "deuterium": "0"}, "mine_rates_per_hour": {"metal": "0", "crystal": "0", "deuterium": "0"}},
+      "expected": {"end": {"metal": "520", "crystal": "510", "deuterium": "0"}}
+    },
+    {
+      "id": "storage-levels-zero-one-two",
+      "kind": "storage-capacity",
+      "input": {"levels": [0, 1, 2], "formula": "floor(2.5 * 1.8331954764^level) * 5000"},
+      "expected": {"capacity_each_level": ["10000", "20000", "40000"]}
+    },
+    {
+      "id": "cap-at-capacity",
+      "kind": "accrual-cap",
+      "input": {"start": {"metal": "9990", "crystal": "500", "deuterium": "0"}, "capacity": {"metal": "10000", "crystal": "10000", "deuterium": "10000"}, "positive_metal_rate_per_hour": "20", "elapsed_seconds": 3600},
+      "expected": {"end": {"metal": "10000", "crystal": "510", "deuterium": "0"}}
+    },
+    {
+      "id": "surplus-above-cap-does-not-accrue",
+      "kind": "accrual-cap",
+      "input": {"start": {"metal": "10050", "crystal": "500", "deuterium": "0"}, "capacity": {"metal": "10000", "crystal": "10000", "deuterium": "10000"}, "positive_metal_rate_per_hour": "20", "elapsed_seconds": 3600},
+      "expected": {"end": {"metal": "10050", "crystal": "510", "deuterium": "0"}}
+    },
+    {
+      "id": "negative-rate-floors-at-zero",
+      "kind": "accrual-negative-rate",
+      "input": {"start": {"metal": "5", "crystal": "500", "deuterium": "0"}, "net_metal_rate_per_hour": "-10", "elapsed_seconds": 3600},
+      "expected": {"end": {"metal": "0", "crystal": "510", "deuterium": "0"}}
+    },
+    {
+      "id": "all-building-levels-zero",
+      "kind": "production-cache",
+      "input": {"levels": {"metal_mine": 0, "crystal_mine": 0, "deuterium_synthesizer": 0, "solar_plant": 0}, "temperature_max": 40},
+      "expected": {"generated_energy": "0", "energy_demand": "0", "production_factor": "not-applicable-no-demand", "gross_mine_per_hour": {"metal": "0", "crystal": "0", "deuterium": "0"}, "total_per_hour": {"metal": "20", "crystal": "10", "deuterium": "0"}}
+    },
+    {
+      "id": "metal-level-one-solar-level-one",
+      "kind": "production-cache",
+      "input": {"levels": {"metal_mine": 1, "crystal_mine": 0, "deuterium_synthesizer": 0, "solar_plant": 1}, "temperature_max": 40},
+      "expected": {"generated_energy": "22", "energy_demand": "11", "production_factor": "1", "gross_mine_per_hour": {"metal": "33", "crystal": "0", "deuterium": "0"}, "total_per_hour": {"metal": "53", "crystal": "10", "deuterium": "0"}}
+    },
+    {
+      "id": "mine-level-one-solar-level-one",
+      "kind": "production-cache",
+      "input": {"levels": {"metal_mine": 1, "crystal_mine": 1, "deuterium_synthesizer": 1, "solar_plant": 1}, "temperature_max": 40},
+      "expected": {"generated_energy": "22", "energy_demand": "55", "production_factor": "0.4", "gross_mine_per_hour": {"metal": "33", "crystal": "22", "deuterium": "13.2"}, "total_per_hour": {"metal": "33.2", "crystal": "18.8", "deuterium": "5.28"}}
+    },
+    {
+      "id": "mine-level-one-solar-level-two",
+      "kind": "production-cache",
+      "input": {"levels": {"metal_mine": 1, "crystal_mine": 1, "deuterium_synthesizer": 1, "solar_plant": 2}, "temperature_max": 40},
+      "expected": {"generated_energy": "48", "energy_demand": "55", "production_factor": "48/55", "raw_generated_energy": "48.4", "gross_mine_per_hour": {"metal": "33", "crystal": "22", "deuterium": "13.2"}, "total_per_hour": {"metal": "48.8", "crystal": "29.2", "deuterium": "11.52"}}
+    },
+    {
+      "id": "metal-only-no-solar",
+      "kind": "production-cache",
+      "input": {"levels": {"metal_mine": 1, "crystal_mine": 0, "deuterium_synthesizer": 0, "solar_plant": 0}, "temperature_max": 40},
+      "expected": {"generated_energy": "0", "energy_demand": "11", "production_factor": "0", "gross_mine_per_hour": {"metal": "33", "crystal": "0", "deuterium": "0"}, "total_per_hour": {"metal": "20", "crystal": "10", "deuterium": "0"}}
+    },
+    {
+      "id": "cost-and-duration-building-catalogue",
+      "kind": "construction-price-and-duration",
+      "assumptions": {"game_speed": "2500", "robotics_level": 0, "nanite_level": 0, "minimum_build_seconds": 1, "target_level_exponent": true},
+      "input": {"buildings": [
+        {"id": 1, "name": "metal_mine", "target_level": 1},
+        {"id": 1, "name": "metal_mine", "target_level": 2},
+        {"id": 2, "name": "crystal_mine", "target_level": 1},
+        {"id": 2, "name": "crystal_mine", "target_level": 2},
+        {"id": 3, "name": "deuterium_synthesizer", "target_level": 1},
+        {"id": 3, "name": "deuterium_synthesizer", "target_level": 2},
+        {"id": 4, "name": "solar_plant", "target_level": 1},
+        {"id": 4, "name": "solar_plant", "target_level": 2},
+        {"id": 22, "name": "metal_storage", "target_level": 1},
+        {"id": 22, "name": "metal_storage", "target_level": 2},
+        {"id": 23, "name": "crystal_storage", "target_level": 1},
+        {"id": 23, "name": "crystal_storage", "target_level": 2},
+        {"id": 24, "name": "deuterium_storage", "target_level": 1},
+        {"id": 24, "name": "deuterium_storage", "target_level": 2}
+      ]},
+      "expected": {"price_seconds": [
+        {"id": 1, "level": 1, "cost": {"metal": "90", "crystal": "22.5"}, "duration": 162},
+        {"id": 1, "level": 2, "cost": {"metal": "135", "crystal": "33.75"}, "duration": 243},
+        {"id": 2, "level": 1, "cost": {"metal": "72", "crystal": "36"}, "duration": 155},
+        {"id": 2, "level": 2, "cost": {"metal": "108", "crystal": "54"}, "duration": 233},
+        {"id": 3, "level": 1, "cost": {"metal": "337.5", "crystal": "112.5"}, "duration": 648},
+        {"id": 3, "level": 2, "cost": {"metal": "506.25", "crystal": "168.75"}, "duration": 972},
+        {"id": 4, "level": 1, "cost": {"metal": "112.5", "crystal": "45"}, "duration": 226},
+        {"id": 4, "level": 2, "cost": {"metal": "168.75", "crystal": "67.5"}, "duration": 340},
+        {"id": 22, "level": 1, "cost": {"metal": "4000", "crystal": "0"}, "duration": 5760},
+        {"id": 22, "level": 2, "cost": {"metal": "8000", "crystal": "0"}, "duration": 11520},
+        {"id": 23, "level": 1, "cost": {"metal": "4000", "crystal": "2000"}, "duration": 8640},
+        {"id": 23, "level": 2, "cost": {"metal": "8000", "crystal": "4000"}, "duration": 17280},
+        {"id": 24, "level": 1, "cost": {"metal": "4000", "crystal": "4000"}, "duration": 11520},
+        {"id": 24, "level": 2, "cost": {"metal": "8000", "crystal": "8000"}, "duration": 23040}
+      ]}
+    },
+    {
+      "id": "exact-fractional-cost-affordability",
+      "kind": "affordability",
+      "input": {"cost": {"metal": "90", "crystal": "22.5", "deuterium": "0"}, "stock": {"metal": "90", "crystal": "22.5", "deuterium": "0"}},
+      "expected": {"affordable": true},
+      "legacy_expected": {"affordable": false, "reason": "legacy floors available stock before comparing"}
+    },
+    {
+      "id": "construction-enqueue-does-not-complete-early",
+      "kind": "construction-boundary",
+      "input": {"building_id": 1, "target_level": 1, "duration_seconds": 162, "start_time": 0, "initial_level": 0, "fields_total": 163, "fields_used": 0, "stock_before_enqueue": {"metal": "500", "crystal": "500", "deuterium": "0"}, "cost_paid_at_enqueue": {"metal": "90", "crystal": "22.5", "deuterium": "0"}, "stock_after_enqueue": {"metal": "410", "crystal": "477.5", "deuterium": "0"}},
+      "expected": {"at_161": {"level": 0, "fields_total": 163, "fields_used": 0, "complete": false}, "at_162": {"level": 1, "fields_total": 163, "fields_used": 1, "complete": true}}
+    },
+    {
+      "id": "completion-accrues-old-state-before-new-rate",
+      "kind": "construction-accrual-order",
+      "input": {"building_id": 1, "target_level": 1, "duration_seconds": 162, "start_time": 0, "start": {"metal": "410", "crystal": "477.5", "deuterium": "0"}, "old_total_rates_per_hour": {"metal": "20", "crystal": "10", "deuterium": "0"}, "solar_plant_level": 1, "other_mine_levels": 0, "operating_percentages": "100%", "temperature_max": 40},
+      "expected": {"at_completion_before_new_rates": {"metal": "410.9", "crystal": "477.95", "deuterium": "0"}, "level_after_completion": 1},
+      "legacy_expected": {"at_completion": {"metal": "412.385", "crystal": "477.95", "deuterium": "0"}, "reason": "legacy increments building level before accrual at completion timestamp; level-1 metal mine produces 33/hour with solar power"}
+    },
+    {
+      "id": "same-timestamp-no-additional-accrual",
+      "kind": "accrual-boundary",
+      "input": {"timestamp": 3600, "last_update": 3600, "stock": {"metal": "520", "crystal": "510", "deuterium": "0"}, "total_rates_per_hour": {"metal": "20", "crystal": "10", "deuterium": "0"}},
+      "expected": {"elapsed_seconds": 0, "stock_unchanged": {"metal": "520", "crystal": "510", "deuterium": "0"}}
+    }
+  ]
+}

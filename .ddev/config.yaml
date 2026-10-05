@@ -1,0 +1,13 @@
+name: 2moons
+type: php
+docroot: public
+php_version: "8.5"
+webserver_type: apache-fpm
+database:
+  type: mariadb
+  version: "11.8"
+web_environment:
+  - DB_HOST=db
+  - DB_USER=db
+  - DB_PASSWORD=db
+  - DB_NAME=db

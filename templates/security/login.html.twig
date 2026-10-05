@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+{% block title %}Sign in · 2Moons{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block body %}
+<section class="auth-layout" aria-labelledby="page-title">
+    <div class="auth-copy">
+        <p class="eyebrow">Your world, at your pace</p>
+        <h1 id="page-title">Sign in</h1>
+        <p>Return to your planet and continue its development.</p>
+        <div class="orbit-illustration" aria-hidden="true"><span class="orbit orbit-a"></span><span class="orbit orbit-b"></span><span class="world"></span><span class="moon"></span></div>
+    </div>
+    <div class="auth-card">
+        {% if error %}<p class="form-alert" role="alert">{{ error }}</p>{% endif %}
+        <form method="post" action="{{ path('app_login') }}" class="form-stack">
+            <div class="field"><label for="username">Email</label><input id="username" name="_username" type="email" value="{{ last_username }}" autocomplete="username" required></div>
+            <div class="field"><label for="password">Password</label><input id="password" name="_password" type="password" autocomplete="current-password" required></div>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+            <button class="button button-primary" type="submit">Sign in <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="auth-switch">New to 2Moons? <a href="{{ path('app_register') }}">Create an account</a></p>
+    </div>
+</section>
+{% endblock %}
